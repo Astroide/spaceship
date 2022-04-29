@@ -256,6 +256,7 @@ addEventListener('keydown', e => {
 
 addEventListener('keyup', e => {
     // if (e.key == ' ') keys.space = true;
+    
 });
 
 let ships = [], lasers = [], fragments = [];
