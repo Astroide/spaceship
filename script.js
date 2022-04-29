@@ -13,10 +13,13 @@ const ctx = canvas.getContext('2d');
 const colorCtx = colorCanvas.getContext('2d');
 
 let areLasersNear = false;
+let nearestLaser = Infinity;
 let playerDead = false;
+let shouldGiveShield = true;
 let kills = 0;
 let score = 0;
-let infos = []
+let infos = [];
+let shieldCount = 0;
 
 class Laser {
     constructor(x, y, angle, color, type) {
@@ -31,8 +34,13 @@ class Laser {
     update(delta) {
         this.x += this.dx * 500 * delta * (this.type == 'player' ? 2 : 1);
         this.y += this.dy * 500 * delta * (this.type == 'player' ? 2 : 1);
-        if (distance2d(this.x, this.y, x, y) < 70 && this.type == 'enemy') {
+        let dist = distance2d(this.x, this.y, x, y);
+        if (dist < 70 && this.type == 'enemy') {
             areLasersNear = true;
+            if (shieldCount > 0) {
+                fragments.push(new Fragment(this.x, this.y, '#ff6611', Math.atan2(this.y - y, this.x - x)));
+            }
+            if (dist < nearestLaser) nearestLaser = dist;
         }
     }
 
@@ -157,6 +165,12 @@ class Ship {
                 kills++;
                 score += 10;
                 if (this.isBig) {
+                    if (shouldGiveShield) {
+                        shouldGiveShield = false;
+                        shieldCount++;
+                    } else {
+                        shouldGiveShield = true;
+                    }
                     score += 40;
                     infos.push([`+40`, 0, this.x, this.y - 20]);
                 }
@@ -306,6 +320,7 @@ function step() {
     }
 
     areLasersNear = false;
+    nearestLaser = Infinity;
     if (playerDead) {
         timeSincePlayerDeath += delta;
     }
@@ -413,6 +428,15 @@ function step() {
     ctx.closePath();
     for (let i = 0; i < lasers.length; i++) {
         if (!playerDead && lasers[i].type == 'enemy' && ctx.isPointInPath(lasers[i].x + 250 - x, lasers[i].y + 250 - y)) {
+            if (shieldCount > 0) {
+                shieldCount--;
+                for (let i = 0; i < Math.PI * 2; i += Math.PI / 100) {
+                    fragments.push(new Fragment(x + Math.cos(i) * 70, y + Math.sin(i) * 70, '#ff6611', i));
+                }
+                lasers.splice(i, 1);
+                i--;
+                continue;
+            }
             playerDead = true;
             for (let X = -30; X < 30; X++) {
                 for (let Y = -30; Y < 30; Y++) {
@@ -453,6 +477,15 @@ function step() {
     ctx.arc(250, 250, 100, angle - Math.PI / 40, angle + Math.PI / 40);
     ctx.stroke();
 
+    if (shieldCount > 0 && areLasersNear) {
+        ctx.globalAlpha = 1 - (nearestLaser / 70);
+        ctx.strokeStyle = '#ff6611';
+        ctx.beginPath();
+        ctx.arc(250, 250, 70, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+
     for (let i = 0; i < ships.length; i++) {
         ctx.strokeStyle = ships[i].isBig ? '#0000ff88' : '#00009988';
         ctx.lineWidth = 5 + 10 ** timeSincePlayerDeath;
@@ -468,6 +501,11 @@ function step() {
     ctx.font = '15px "DIN 1451"';
     ctx.textAlign = 'right';
     ctx.fillText(`SCORE ${score} SR ${spawnRate.toFixed(2)}`, 495, 20);
+    if (shieldCount > 0) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#ff6611';
+        ctx.fillText(`X ${shieldCount}`, 5, 20);
+    }
     if (displayCooldown) {
         if (dashCooldown < 0) {
             displayCooldown = false;
