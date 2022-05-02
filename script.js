@@ -4,9 +4,11 @@ let perlin = new perlinNoise3d();
 perlin.noiseSeed(Math.random());
 
 // let o = Date.now; Date.now = () => o() / 5;
-let o = Date.now();
-let c = 1;
-Date.now = () => c++ * 20;
+// let o = Date.now();
+// let c = 1;
+// Date.now = () => c++ * 20;
+
+let highScore = Math.floor(localStorage.highScore || 0.001);
 
 const canvas = document.querySelector('#main');
 const colorCanvas = document.querySelector('#color');
@@ -305,6 +307,14 @@ function step() {
             ctx.fillText(`SCORE`, canvas.width / 2, canvas.height / 2 - 50);
             ctx.font = `60px "DIN 1451"`;
             ctx.fillText(`${score}`, canvas.width / 2, canvas.height / 2);
+            if (score > highScore) {
+                localStorage.highScore = score;
+                ctx.font = `20px "DIN 1451"`;
+                ctx.fillText(`Nouveau meilleur score`, canvas.width / 2, canvas.height / 2 + 50);
+            } else {
+                ctx.font = `20px "DIN 1451"`;
+                ctx.fillText(`Meilleur score : ${highScore}`, canvas.width / 2, canvas.height / 2 + 50);
+            }
             requestAnimationFrame(fn);
         };
         requestAnimationFrame(fn);
