@@ -47,6 +47,8 @@ class Laser {
             }
             if (dist < nearestLaser) nearestLaser = dist;
         }
+        fragments.push(new Fragment(this.x, this.y, this.color, Math.atan2(this.dy, this.dx)));
+        fragments[fragments.length - 1].lifetime = 0.2;
     }
 
     draw(ctx) {
@@ -57,16 +59,26 @@ class Laser {
         ctx.moveTo(this.x - this.dx * length, this.y - this.dy * length);
         ctx.lineTo(this.x + this.dx * length, this.y + this.dy * length);
         ctx.stroke();
+        ctx.globalAlpha = 0.3;
+        for (let i = 4; i < 10; i += 2) {
+            ctx.beginPath();
+            ctx.moveTo(this.x - this.dx * (length + i), this.y - this.dy * (length + i));
+            ctx.lineTo(this.x + this.dx * (length + i), this.y + this.dy * (length + i));
+            ctx.lineWidth = i;
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
     }
 }
 
 class Fragment {
-    constructor(x, y, color, angle) {
+    constructor(x, y, color, angle, speed) {
         this.x = x;
         this.y = y;
         this.angle = angle || (Math.random() * Math.PI * 2);
-        this.dx = Math.cos(this.angle) * (Math.random() * 1 + .5) * 300;
-        this.dy = Math.sin(this.angle) * (Math.random() * 1 + .5) * 300;
+        this.speed = speed || 300;
+        this.dx = Math.cos(this.angle) * (Math.random() * 1 + .5) * this.speed;
+        this.dy = Math.sin(this.angle) * (Math.random() * 1 + .5) * this.speed;
         this.lifetime = 5;
         this.color = color;
     }
@@ -241,6 +253,7 @@ let keys = {
 };
 let dashAngle, displayCooldownTime;
 let fakeSpace = true;
+let timeSinceLastParticle = 0;
 
 addEventListener('keydown', e => {
     // if (e.key == ' ') keys.space = false;
@@ -549,6 +562,15 @@ function step() {
         // }
         x += dx * delta * 170;
         y += dy * delta * 170;
+    }
+
+    timeSinceLastParticle += delta;
+    while (timeSinceLastParticle > 0.1) {
+        timeSinceLastParticle -= 0.1;
+        fragments.push(new Fragment(x, y, 'purple', angle + Math.PI + Math.random() * Math.PI / 20 - Math.PI / 10, 80 + Math.random() * 40));
+        fragments[fragments.length - 1].lifetime = 0.6;
+        fragments.push(new Fragment(x, y, 'purple', angle + Math.PI + Math.random() * Math.PI / 20 - Math.PI / 10, 80 + Math.random() * 40));
+        fragments[fragments.length - 1].lifetime = 0.6;
     }
 
     if (enteredDash) {
