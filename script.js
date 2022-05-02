@@ -4,6 +4,9 @@ let perlin = new perlinNoise3d();
 perlin.noiseSeed(Math.random());
 
 // let o = Date.now; Date.now = () => o() / 5;
+let o = Date.now();
+let c = 1;
+Date.now = () => c++ * 20;
 
 const canvas = document.querySelector('#main');
 const colorCanvas = document.querySelector('#color');
@@ -235,10 +238,12 @@ let keys = {
     space: true
 };
 let dashAngle, displayCooldownTime;
+let fakeSpace = true;
 
 addEventListener('keydown', e => {
     // if (e.key == ' ') keys.space = false;
-    if (e.key == ' ') {
+    if (e.key == ' ' || fakeSpace) {
+        fakeSpace = false;
         if (dashCooldown <= 0) {
             dashCooldown = 4;
             enteredDash = true;
@@ -256,7 +261,6 @@ addEventListener('keydown', e => {
 
 addEventListener('keyup', e => {
     // if (e.key == ' ') keys.space = true;
-    
 });
 
 let ships = [], lasers = [], fragments = [];
@@ -541,7 +545,7 @@ function step() {
         let amount = timeInDash > 0.175 ? (0.35 - timeInDash) : timeInDash;
         let data = ctx.getImageData(0, 0, 500, 500);
         let data2 = colorCtx.createImageData(500, 500);
-        let distance = -Math.sin(amount * (1 / 0.175) * Math.PI * 2) * 12;
+        let distance = -Math.sin(amount * (1 / 0.35) * Math.PI * 2) * 12;
         let translateX = Math.cos(dashAngle + Math.PI / 2) * distance;
         let translateY = Math.sin(dashAngle + Math.PI / 2) * distance;
         for (let i = 0; i < data.data.length; i += 4) {
