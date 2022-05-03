@@ -249,33 +249,36 @@ canvas.addEventListener('mousemove', e => {
 });
 
 let keys = {
-    space: true
+    space: false
 };
 let dashAngle, displayCooldownTime;
-let fakeSpace = true;
 let timeSinceLastParticle = 0;
+let dashLoad = 0;
+let loadingDash = false;
 
 addEventListener('keydown', e => {
-    // if (e.key == ' ') keys.space = false;
-    if (e.key == ' ' || fakeSpace) {
-        fakeSpace = false;
-        if (dashCooldown <= 0) {
-            dashCooldown = 4;
+    if (e.key == ' ' && !keys.space) {
+        loadingDash = true;
+        dashLoad = 0;
+        keys.space = true;
+    }
+    // if (e.key == ' ' || fakeSpace) {
+    // fakeSpace = false;
+    // 
+    // }
+});
+
+addEventListener('keyup', e => {
+    if (e.key == ' ') {
+        keys.space = false;
+        loadingDash = false;
+        if (dashLoad > 2) {
             enteredDash = true;
             timeInDash = 0;
             dashAngle = Math.atan2(mouseY, mouseX);
             dashThisFrame = true;
-            displayCooldown = true;
-            displayCooldownTime = 0.85;
-        } else {
-            displayCooldown = true;
-            displayCooldownTime = 0.85;
         }
     }
-});
-
-addEventListener('keyup', e => {
-    // if (e.key == ' ') keys.space = true;
 });
 
 let ships = [], lasers = [], fragments = [];
@@ -354,11 +357,12 @@ function step() {
     }
 
     timeInDash += delta;
-    if (timeInDash > 0.35) {
+    if (timeInDash > 0.35 * (dashLoad / 4)) {
         enteredDash = false;
     }
-
     if (doUpdate) {
+        if (loadingDash && keys.space) dashLoad += delta;
+        dashLoad = Math.min(dashLoad, 4);
         dashCooldown -= delta;
         displayCooldownTime -= delta;
         q += delta;
@@ -534,20 +538,20 @@ function step() {
         ctx.fillStyle = '#ff6611';
         ctx.fillText(`X ${shieldCount}`, 5, 20);
     }
-    if (displayCooldown) {
-        if (dashCooldown < 0) {
-            displayCooldown = false;
-        } else {
-            ctx.save();
-            ctx.translate(250, 300);
-            ctx.rotate(Math.random() * Math.PI / 25 - Math.PI / 50);
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(-50, -10, 100, 20);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(-48, -8, 96 * (1 - (dashCooldown / 4)), 16);
-            ctx.restore();
-        }
+    if (loadingDash) {
+        // if (dashLoad < 4) {
+        // displayCooldown = false;
+        // } else {
+        ctx.save();
+        ctx.translate(250, 300);
+        ctx.rotate(Math.random() * Math.PI / 25 - Math.PI / 50);
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(-50, -10, 100, 20);
+        ctx.fillStyle = dashLoad >= 2 ? 'white' : 'red';
+        ctx.fillRect(-48, -8, 96 * (dashLoad / 4), 16);
+        ctx.restore();
+        // }
     }
     if (!playerDead && doUpdate) {
         let movementX = Math.cos(angle) * (keys.space ? 2 : 1);
